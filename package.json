@@ -1,0 +1,27 @@
+{
+  "name": "fetch-rewrite",
+  "version": "1.0.0",
+  "description": "This small library will let you apply rewrite rules to fetch commands.",
+  "main": "rewrite.mjs",
+  "type": "module",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "fetch",
+    "rewrite",
+    "url",
+    "urlrewrite",
+    "fetch-rewrite",
+    "mitm",
+    "mitmproxy",
+    "proxy",
+    "fetch-proxy",
+    "fetch-mitm"
+  ],
+  "author": "Remy Sharp",
+  "license": "MIT"
+}
