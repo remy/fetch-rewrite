@@ -4,17 +4,17 @@
   "description": "This small library will let you apply rewrite rules to fetch commands.",
   "main": "rewrite.mjs",
   "type": "module",
+  "types": "types.d.ts",
   "directories": {
     "example": "examples"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node rewrite.test.mjs"
   },
   "keywords": [
     "fetch",
     "rewrite",
     "url",
-    "urlrewrite",
     "fetch-rewrite",
     "mitm",
     "mitmproxy",
@@ -23,5 +23,8 @@
     "fetch-mitm"
   ],
   "author": "Remy Sharp",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.56.0"
+  }
 }

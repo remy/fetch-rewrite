@@ -6,8 +6,8 @@ This is useful for "fixing" other people's code (or perhaps for testing). My spe
 
 ## TODO
 
-- [ ] Method matching
-- [ ] Deeper URL matching (i.e. on origin too)
-- [ ] Pattern match/regex support on URL match
-- [ ] Tests
+- [x] Method matching
+- [x] Deeper URL matching (i.e. on origin too)
+- [x] Pattern match/regex support on URL match
+- [x] Tests
 - [ ] Actually include more documentation and examples

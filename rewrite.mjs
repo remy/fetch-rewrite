@@ -1,55 +1,94 @@
-if (typeof fetch === 'undefined') {
-  console.warn('fetch is not defined on the global scope');
+/**
+ * @param {string} target
+ * @param {string | RegExp} matcher
+ * @returns {boolean}
+ */
+export function eqOrMatch(target, matcher) {
+  if (typeof matcher === 'string') {
+    if (matcher === '*') {
+      return true;
+    }
+
+    return matcher === target;
+  }
+
+  if (matcher instanceof RegExp) {
+    return matcher.test(target);
+  }
+
+  return false;
 }
 
-export default function rewriteFetch(rules) {
-  const $_fetch = fetch;
+/**
+ *
+ * @param {import("./types").Rules} rules
+ * @param {URL} url
+ * @param {import("./types").FetchOptions} [options]
+ * @returns {import("./types").Rule | false}
+ */
+export function matcher(rules, url, options = {}) {
+  return (
+    rules.find((item) => {
+      let { path, query, origin, method } = item;
 
-  // modify the global
-  fetch = async (url, options = {}) => {
-    const matched = rules.find((item) => {
-      let { url: _url, query } = item;
+      const tests = [
+        [origin, url.origin],
+        [method, options.method],
+        [path, url.pathname],
+        [query, url.search?.substring(1)],
+      ];
 
-      if (typeof url === 'string') {
-        if (typeof window !== 'undefined') {
-          url = new URL(url, window.location.origin);
-        } else {
-          url = new URL(url);
+      for (let [test, target] of tests) {
+        if (test && !eqOrMatch(target, test)) {
+          return false;
         }
       }
 
-      if (url.pathname !== _url) return false;
+      return true;
+    }) || false
+  );
+}
 
-      // if there's no query, then we match all on the url
-      if (!query) return true;
+/**
+ * @param {import("./types").Rules} rules
+ */
+export default function rewriteFetch(rules) {
+  const $_fetch = fetch;
 
-      const searchParams = url.search.substring(1);
+  // hacky
+  if (!Array.isArray(rules)) {
+    rules = [rules];
+  }
 
-      if (typeof query === 'string') {
-        // test after the "?" and then do a full match
-        return query === searchParams;
+  // modify the global fetch
+  // eslint-disable-next-line no-global-assign
+  fetch = async (url, options = {}) => {
+    // if we're in a browser, then we can use the location origin
+    const execOrigin =
+      (typeof window !== 'undefined' && window.location.origin) || undefined;
+    if (typeof url === 'string') url = new URL(url, execOrigin);
+
+    // find the first matching rules based on origin, pathname, and query
+    const matched = matcher(rules, url, options);
+
+    if (!matched) {
+      return $_fetch(url, options);
+    }
+
+    if (matched.rewrite) {
+      // FIXME add support for rewrite options / modifying the entire request
+      if (typeof matched.rewrite === 'function') {
+        return matched.rewrite($_fetch, url, options);
       }
+      return $_fetch(matched.rewrite, options);
+    }
 
-      if (query instanceof RegExp) {
-        return query.test(searchParams);
-      }
-
-      // unsupported
-      return false;
-    });
+    const { modify } = matched;
 
     const res = await $_fetch(url, options);
 
-    if (!matched) {
-      return res;
-    } else if (!matched.rewrite) {
-      return res;
-    }
-
-    const { rewrite } = matched;
-
     const rewrites = {};
-    for (let key in rewrite) {
+    for (let key in modify) {
       if (key in res) {
         // create a bound backup of the original function
         rewrites[key] = res[key].bind(res);
@@ -58,10 +97,8 @@ export default function rewriteFetch(rules) {
         res[key] = (...args) =>
           rewrites[key](...args).then((res) => {
             try {
-              return rewrite[key](res);
+              return modify[key](res);
             } catch (e) {
-              // silently fail
-              console.warn(`rewrite function (${key}) failed`, e);
               return res;
             }
           });
@@ -70,6 +107,4 @@ export default function rewriteFetch(rules) {
 
     return res;
   };
-
-  return fetch;
 }
