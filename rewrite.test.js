@@ -1,5 +1,6 @@
-import assert from 'assert';
-import { eqOrMatch, matcher } from './rewrite.mjs';
+/* eslint-env node */
+const assert = require('assert');
+const { eqOrMatch, matcher } = require('./rewrite');
 
 // Test eqOrMatch function
 function testEqOrMatch() {

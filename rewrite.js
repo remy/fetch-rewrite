@@ -3,7 +3,7 @@
  * @param {string | RegExp} matcher
  * @returns {boolean}
  */
-export function eqOrMatch(target, matcher) {
+rewriteFetch.eqOrMatch = (target, matcher) => {
   if (typeof matcher === 'string') {
     if (matcher === '*') {
       return true;
@@ -17,7 +17,7 @@ export function eqOrMatch(target, matcher) {
   }
 
   return false;
-}
+};
 
 /**
  *
@@ -26,7 +26,7 @@ export function eqOrMatch(target, matcher) {
  * @param {import("./types").FetchOptions} [options]
  * @returns {import("./types").Rule | false}
  */
-export function matcher(rules, url, options = {}) {
+rewriteFetch.matcher = (rules, url, options = {}) => {
   return (
     rules.find((item) => {
       let { path, query, origin, method } = item;
@@ -39,7 +39,7 @@ export function matcher(rules, url, options = {}) {
       ];
 
       for (let [test, target] of tests) {
-        if (test && !eqOrMatch(target, test)) {
+        if (test && !rewriteFetch.eqOrMatch(target, test)) {
           return false;
         }
       }
@@ -47,12 +47,12 @@ export function matcher(rules, url, options = {}) {
       return true;
     }) || false
   );
-}
+};
 
 /**
  * @param {import("./types").Rules} rules
  */
-export default function rewriteFetch(rules) {
+function rewriteFetch(rules) {
   const $_fetch = fetch;
 
   // hacky
@@ -69,7 +69,7 @@ export default function rewriteFetch(rules) {
     if (typeof url === 'string') url = new URL(url, execOrigin);
 
     // find the first matching rules based on origin, pathname, and query
-    const matched = matcher(rules, url, options);
+    const matched = rewriteFetch.matcher(rules, url, options);
 
     if (!matched) {
       return $_fetch(url, options);
@@ -107,4 +107,9 @@ export default function rewriteFetch(rules) {
 
     return res;
   };
+}
+
+if (typeof module !== 'undefined') {
+  // eslint-disable-next-line no-undef
+  module.exports = rewriteFetch;
 }
